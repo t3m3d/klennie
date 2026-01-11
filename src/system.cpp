@@ -12,6 +12,7 @@ namespace fs = std::filesystem;
 System::System()
 {
     prevTotalCpu_ = readTotalCpuJiffies();
+    updateSummary();
 }
 
 void System::update()
@@ -21,7 +22,7 @@ void System::update()
     std::uint64_t currentTotalCpu = readTotalCpuJiffies();
     std::uint64_t totalCpuDelta = currentTotalCpu - prevTotalCpu_;
     if (totalCpuDelta == 0)
-        totalCpuDelta = 1; // avoid div by zero
+        totalCpuDelta = 1;
 
     std::vector<Process> current;
     std::unordered_map<int, std::uint64_t> currentProcCpu;
@@ -51,22 +52,17 @@ void System::update()
 
         std::uint64_t delta = procJiffies - prevJiffies;
         proc.cpuPercent = (100.0 * static_cast<double>(delta)) /
-                          static_cast<double>(totalCpuDelta);
+        static_cast<double>(totalCpuDelta);
 
         current.push_back(proc);
     }
 
-    // Update previous CPU snapshots
     prevTotalCpu_ = currentTotalCpu;
     prevProcCpu_ = std::move(currentProcCpu);
 
-    // Sort by CPU descending
-    std::sort(current.begin(), current.end(),
-              [](const Process& a, const Process& b) {
-                  return a.cpuPercent > b.cpuPercent;
-              });
-
     processes_ = std::move(current);
+
+    updateSummary();
 }
 
 std::uint64_t System::readTotalCpuJiffies() const
@@ -82,9 +78,8 @@ std::uint64_t System::readTotalCpuJiffies() const
     std::istringstream iss(line);
     std::string cpuLabel;
     std::uint64_t user, nice, system, idle, iowait, irq, softirq, steal;
-    // cpu  user nice system idle iowait irq softirq steal ...
     if (!(iss >> cpuLabel >> user >> nice >> system >> idle
-              >> iowait >> irq >> softirq >> steal))
+        >> iowait >> irq >> softirq >> steal))
     {
         return 0;
     }
@@ -96,7 +91,6 @@ bool System::readProcessStat(int pid, Process& proc, std::uint64_t& totalProcJif
 {
     std::string base = "/proc/" + std::to_string(pid);
 
-    // /proc/[pid]/stat
     std::ifstream statFile(base + "/stat");
     if (!statFile)
         return false;
@@ -104,41 +98,26 @@ bool System::readProcessStat(int pid, Process& proc, std::uint64_t& totalProcJif
     std::string statLine;
     std::getline(statFile, statLine);
 
-    // /proc/[pid]/stat has multiple fields, we care about:
-    // 1 pid
-    // 2 comm (in parentheses)
-    // 14 utime
-    // 15 stime
-    // 24 rss (in pages)
     std::istringstream iss(statLine);
     int readPid;
     std::string comm;
     char state;
     std::uint64_t utime, stime;
     long rssPages;
-    // We'll read fields up to rss
-    // There are many fields; we can extract stepwise.
 
-    // Format: pid (comm) state ppid pgrp session tty_nr tpgid flags minflt cminflt
-    //         majflt cmajflt utime stime cutime cstime priority nice num_threads
-    //         itrealvalue starttime vsize rss ...
     iss >> readPid >> comm >> state;
 
-    // Skip fields 4–13
     std::string skip;
     for (int i = 0; i < 10; ++i)
         iss >> skip;
 
     iss >> utime >> stime;
 
-    // Skip cutime, cstime, priority, nice, num_threads, itrealvalue, starttime, vsize
     for (int i = 0; i < 7; ++i)
         iss >> skip;
 
     iss >> rssPages;
 
-    // Process name: comm includes parentheses, e.g. (bash)
-    // Strip parentheses.
     if (comm.size() >= 2 && comm.front() == '(' && comm.back() == ')')
         proc.name = comm.substr(1, comm.size() - 2);
     else
@@ -159,4 +138,60 @@ std::uint64_t System::readPageSize() const
     if (v <= 0)
         return 4096;
     return static_cast<std::uint64_t>(v);
+}
+
+void System::updateSummary()
+{
+    readLoadAvg();
+    readMemInfo();
+    readUptime();
+}
+
+void System::readLoadAvg()
+{
+    std::ifstream f("/proc/loadavg");
+    if (!f)
+        return;
+
+    f >> summary_.load1 >> summary_.load5 >> summary_.load15;
+}
+
+void System::readMemInfo()
+{
+    std::ifstream f("/proc/meminfo");
+    if (!f)
+        return;
+
+    std::string key;
+    std::uint64_t value;
+    std::string unit;
+
+    std::uint64_t memTotalKB = 0;
+    std::uint64_t memFreeKB = 0;
+    std::uint64_t memAvailKB = 0;
+
+    while (f >> key >> value >> unit)
+    {
+        if (key == "MemTotal:")
+            memTotalKB = value;
+        else if (key == "MemFree:")
+            memFreeKB = value;
+        else if (key == "MemAvailable:")
+            memAvailKB = value;
+    }
+
+    summary_.memTotalMiB = memTotalKB / 1024;
+    summary_.memFreeMiB = memFreeKB / 1024;
+    summary_.memAvailableMiB = memAvailKB / 1024;
+}
+
+void System::readUptime()
+{
+    std::ifstream f("/proc/uptime");
+    if (!f)
+        return;
+
+    double upSeconds = 0.0;
+    f >> upSeconds;
+    summary_.uptimeSeconds = static_cast<std::uint64_t>(upSeconds);
 }
