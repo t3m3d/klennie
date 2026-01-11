@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/kprocview.dir/link.d CMakeFiles/kprocview.dir/src/main.cpp.o CMakeFiles/kprocview.dir/src/process.cpp.o CMakeFiles/kprocview.dir/src/system.cpp.o CMakeFiles/kprocview.dir/src/ui.cpp.o -o kprocview  -lcurses -lform
