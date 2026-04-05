@@ -5,7 +5,7 @@
 ktop.exe
 ktop
 *_tmp.c
-
+*.iss
 # Old CMake/package build artifacts
 /build
 /pkg
