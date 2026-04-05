@@ -1,11 +1,11 @@
 # ktop
 
-A terminal process viewer written in [Krypton](https://github.com/t3m3d/krypton). Shows live CPU, memory, and process info. Works on Windows and Linux.
+A terminal process viewer written in [Krypton](https://github.com/t3m3d/krypton). Shows live CPU%, memory, and process info. Works on Windows and Linux.
 
 ## Requirements
 
 - [Krypton compiler (kcc)](https://github.com/t3m3d/krypton) — cloned alongside this repo at `../krypton/`
-- GCC (e.g. TDM-GCC, MinGW-w64, or system gcc on Linux)
+- GCC — TDM-GCC or MinGW-w64 on Windows, system gcc on Linux
 
 ## Building
 
@@ -15,13 +15,15 @@ A terminal process viewer written in [Krypton](https://github.com/t3m3d/krypton)
 build.bat
 ```
 
-Compiles `ktop.exe`, installs it to `C:\krypton\bin\`, and launches it. Run from the `klennie` directory.
+Compiles `ktop.exe`, installs it to `C:\krypton\bin\`, and launches it.
 
 First time only — add `C:\krypton\bin` to your PATH (admin cmd):
 
-```
+```bat
 setx /M PATH "%PATH%;C:\krypton\bin"
 ```
+
+Link flags used: `-lpsapi -lpdh -lm`
 
 ### Linux
 
@@ -43,8 +45,8 @@ ktop [--sort cpu|mem|pid|name] [--refresh ms] [--no-color]
 | `m` | Sort by memory |
 | `p` | Sort by PID |
 | `n` | Sort by name |
-| Up / Down | Scroll |
-| PgUp / PgDn | Scroll page |
+| Up / Down | Scroll one row |
+| PgUp / PgDn | Scroll one page |
 | `q` | Quit |
 
 ## Source files
@@ -54,19 +56,9 @@ ktop [--sort cpu|mem|pid|name] [--refresh ms] [--no-color]
 | `run.k` | Entry point, arg parsing, main loop |
 | `process.k` | Process collection and sorting |
 | `sysinfo.k` | Uptime, memory, load average |
-| `ui.k` | Terminal drawing (ANSI) |
+| `ui.k` | Terminal drawing (ANSI escape codes) |
 | `utils.k` | String utilities |
-| `platform.h` | C platform bridge (Windows/Linux) |
-| `platform.krh` | Krypton declarations for platform.h |
+| `platform.h` | C shim — keyboard, terminal size, sleep, process snapshot (Windows + Linux) |
+| `platform.krh` | Krypton declarations for `platform.h` |
 | `build.bat` | Windows build script |
 | `build.sh` | Linux build script |
-
-## .gitignore
-
-The following should be ignored and not committed:
-
-```
-ktop.exe
-ktop
-*_tmp.c
-```
