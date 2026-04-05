@@ -16,3 +16,4 @@ ktop
 CMakeLists.txt
 PKGBUILD
 .claude/*
+.claude/settings.local.json

@@ -18,7 +18,8 @@
       "Bash(git -C /c/Users/brian/Documents/GitHub/klennie diff --name-only)",
       "Bash(git -C /c/Users/brian/Documents/GitHub/klennie diff --cached --name-only)",
       "Bash(git -C /c/Users/brian/Documents/GitHub/krypton diff --name-only)",
-      "Bash(git -C /c/Users/brian/Documents/GitHub/krypton diff --cached --name-only)"
+      "Bash(git -C /c/Users/brian/Documents/GitHub/krypton diff --cached --name-only)",
+      "Bash(xargs grep:*)"
     ]
   }
 }
