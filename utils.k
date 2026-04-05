@@ -1,4 +1,4 @@
-// utils.k — string utilities for kprocview
+// utils.k — string utilities for ktop
 
 // nthline: get nth newline-delimited line (0-indexed)
 func nthline(s, idx) {

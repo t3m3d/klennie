@@ -14,7 +14,11 @@
       "Bash(unzip -q PDCurses-3.8.zip)",
       "Bash(mingw32-make -f Makefile)",
       "Bash(cmake .. -G \"MinGW Makefiles\")",
-      "Bash(mingw32-make)"
+      "Bash(mingw32-make)",
+      "Bash(git -C /c/Users/brian/Documents/GitHub/klennie diff --name-only)",
+      "Bash(git -C /c/Users/brian/Documents/GitHub/klennie diff --cached --name-only)",
+      "Bash(git -C /c/Users/brian/Documents/GitHub/krypton diff --name-only)",
+      "Bash(git -C /c/Users/brian/Documents/GitHub/krypton diff --cached --name-only)"
     ]
   }
 }
